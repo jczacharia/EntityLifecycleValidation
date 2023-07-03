@@ -156,7 +156,7 @@ public class ContestLifecycleTest
             Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
             result!.Message.Should().Be("A contest can only be finalized if it has at least 10 contestants.");
 
-            await _tb.DbCtx.Contestants.AddRangeAsync(Enumerable.Range(0, 10)
+            await dbCtx.Contestants.AddRangeAsync(Enumerable.Range(0, 10)
                 .Select(_ => new Contestant
                 {
                     Contest = contest,
@@ -198,7 +198,7 @@ public class ContestLifecycleTest
             Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
             result!.Message.Should().Be("A contest cannot be deleted if it has contestants.");
 
-            _tb.DbCtx.Contestants.Remove(contestant);
+            dbCtx.Contestants.Remove(contestant);
             Assert.DoesNotThrowAsync(() => dbCtx.SaveChangesAsync());
             return default;
         });
