@@ -25,10 +25,3 @@ public class CreateContestCommandHandler : ICommandHandler<CreateContestCommand,
         return contest;
     }
 }
-
-
-
-
-
-
-

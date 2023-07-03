@@ -11,12 +11,12 @@ public class EntityLifecycleSaveChangesInterceptor : SaveChangesInterceptor
     public EntityLifecycleSaveChangesInterceptor(IPublisher publisher) => _publisher = publisher;
 
     /// <summary>
-    /// Flag to prevent infinite recursion, allowing the entity lifecycle middleware to call SaveChangesAsync.
+    ///     Flag to prevent infinite recursion, allowing the entity lifecycle middleware to call SaveChangesAsync.
     /// </summary>
     private bool IsSaving { get; set; }
 
     /// <summary>
-    /// Flag to prevent infinite recursion, allowing the entity lifecycle middleware to call SaveChangesAsync.
+    ///     Flag to prevent infinite recursion, allowing the entity lifecycle middleware to call SaveChangesAsync.
     /// </summary>
     private bool IsFinalizing { get; set; }
 

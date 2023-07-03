@@ -63,6 +63,7 @@ public class TestBed
     {
         // Ensure we saved all data in the test bed
         await DbCtx.SaveChangesAsync();
+
         await using AsyncServiceScope scope = _serviceCollection.BuildServiceProvider().CreateAsyncScope();
         await func(scope.ServiceProvider);
     }
@@ -71,6 +72,7 @@ public class TestBed
     {
         // Ensure we saved all data in the test bed
         await DbCtx.SaveChangesAsync();
+
         await using AsyncServiceScope scope = _serviceCollection.BuildServiceProvider().CreateAsyncScope();
         ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
         return await sender.Send(request);
@@ -80,6 +82,7 @@ public class TestBed
     {
         // Ensure we saved all data in the test bed
         await DbCtx.SaveChangesAsync();
+
         await using AsyncServiceScope scope = _serviceCollection.BuildServiceProvider().CreateAsyncScope();
         ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
         TResponse response = await sender.Send(request);
@@ -102,7 +105,6 @@ public class TestBed
         await DbCtx.SaveChangesAsync();
 
         await using AsyncServiceScope scope = _serviceCollection.BuildServiceProvider().CreateAsyncScope();
-
         ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
         TException exception = null!;
 

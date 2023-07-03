@@ -8,8 +8,8 @@ namespace Application.Contests;
 
 public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
 {
-    private readonly ILogger<ContestLifecycleHandler> _logger;
     private readonly DbCtx _dbCtx;
+    private readonly ILogger<ContestLifecycleHandler> _logger;
 
     public ContestLifecycleHandler(ILogger<ContestLifecycleHandler> logger, DbCtx dbCtx)
     {
@@ -68,8 +68,8 @@ public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
         {
             _logger.LogInformation("Detected a modified contest {ContestId} that is not draft, checking for forbidden property modifications", contest.Id);
 
-            var name = entry.Property(e => e.Name);
-            var lockDate = entry.Property(e => e.LockDate);
+            PropertyEntry<Contest, string> name = entry.Property(e => e.Name);
+            PropertyEntry<Contest, DateTime> lockDate = entry.Property(e => e.LockDate);
 
             if (name.IsModified)
             {

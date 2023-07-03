@@ -179,7 +179,7 @@ public class ContestLifecycleTest
         };
         await _tb.DbCtx.Contests.AddAsync(contest);
 
-        var contestant = new Contestant
+        Contestant contestant = new Contestant
         {
             Contest = contest,
             User = new User

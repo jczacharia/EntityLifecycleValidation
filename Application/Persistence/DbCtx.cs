@@ -6,6 +6,9 @@ namespace Application.Persistence;
 
 public class DbCtx : DbContext
 {
+    private readonly IPublisher _publisher;
+
+    public DbCtx(DbContextOptions<DbCtx> options, IPublisher publisher) : base(options) => _publisher = publisher;
     public DbSet<User> Users { get; set; } = default!;
     public DbSet<Contest> Contests { get; set; } = default!;
     public DbSet<Contestant> Contestants { get; set; } = default!;
@@ -16,10 +19,6 @@ public class DbCtx : DbContext
     ///     Never set this to true in development and production.
     /// </summary>
     public bool IgnoreLifecycleInterceptor { get; set; }
-
-    private readonly IPublisher _publisher;
-
-    public DbCtx(DbContextOptions<DbCtx> options, IPublisher publisher) : base(options) => _publisher = publisher;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder.AddInterceptors(new EntityLifecycleSaveChangesInterceptor(_publisher));
