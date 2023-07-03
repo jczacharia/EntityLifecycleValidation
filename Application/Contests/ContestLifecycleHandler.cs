@@ -69,13 +69,12 @@ public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
             _logger.LogInformation("Detected a modified contest {ContestId} that is not draft, checking for forbidden property modifications", contest.Id);
 
             PropertyEntry<Contest, string> name = entry.Property(e => e.Name);
-            PropertyEntry<Contest, DateTime> lockDate = entry.Property(e => e.LockDate);
-
             if (name.IsModified)
             {
                 throw new Exception("A contest's name cannot be modified once the contest has been published.");
             }
 
+            PropertyEntry<Contest, DateTime> lockDate = entry.Property(e => e.LockDate);
             if (lockDate.IsModified)
             {
                 throw new Exception("A contest's lock date cannot be modified once the contest has been published.");
