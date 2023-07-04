@@ -52,7 +52,7 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
 
         if (contest.Status is not ContestStatus.Draft)
         {
-            CheckForbiddenPropertyModifications(entry, contest);
+            CheckForbiddenPropertyModifications(entry);
         }
     }
 
@@ -104,9 +104,9 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
         _logger.LogInformation("Contest {ContestId} has at least 10 contestants and lock date has passed. Allowing the contest to be finalized", contest.Id);
     }
 
-    private void CheckForbiddenPropertyModifications(EntityEntry<Contest> entry, Contest contest)
+    private void CheckForbiddenPropertyModifications(EntityEntry<Contest> entry)
     {
-        _logger.LogInformation("Detected a modified contest {ContestId} that is not draft, checking for forbidden property modifications", contest.Id);
+        _logger.LogInformation("Detected a modified contest {ContestId} that is not draft, checking for forbidden property modifications", entry.Entity.Id);
 
         PropertyEntry<Contest, string> name = entry.Property(e => e.Name);
         if (name.IsModified)
@@ -120,7 +120,7 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
             throw new Exception("A contest's lock date cannot be modified once the contest has been published.");
         }
 
-        _logger.LogInformation("Contest {ContestId} has no forbidden property modifications. Allowing the contest to be modified", contest.Id);
+        _logger.LogInformation("Contest {ContestId} has no forbidden property modifications. Allowing the contest to be modified", entry.Entity.Id);
     }
 
     protected override async ValueTask Deleted(EntityEntry<Contest> entry, CancellationToken cancellationToken)
