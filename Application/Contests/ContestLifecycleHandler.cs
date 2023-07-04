@@ -38,56 +38,26 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
         Contest contest = entry.Entity;
         PropertyEntry<Contest, ContestStatus> status = entry.Property(e => e.Status);
 
+        DetectForbiddenStateTransitions(status);
+
         if (status is { OriginalValue: ContestStatus.Draft, CurrentValue: ContestStatus.Public })
         {
-            _logger.LogInformation("Detected contest {ContestId} is being published. Validating the lock date is at least three days in the future", contest.Id);
-
-            if (contest.LockDate < DateTime.UtcNow.AddDays(3))
-            {
-                throw new Exception("A contest can only be published if the lock date is at least three days in the future.");
-            }
-
-            _logger.LogInformation("Contest {ContestId} has a valid lock date. Allowing the contest to be published", contest.Id);
+            DraftToPublic(contest);
         }
 
         if (status is { OriginalValue: ContestStatus.Public, CurrentValue: ContestStatus.Finalized })
         {
-            _logger.LogInformation("Detected contest {ContestId} is being finalized. Validating the contest has at least 10 contestants and lock date has passed", contest.Id);
-
-            int contestantsCount = await _dbCtx.Contestants.CountAsync(c => c.Contest.Id == contest.Id, cancellationToken);
-            if (contestantsCount < 10)
-            {
-                throw new Exception("A contest can only be finalized if it has at least 10 contestants.");
-            }
-
-            if (contest.LockDate > DateTime.UtcNow)
-            {
-                throw new Exception("A contest can only be finalized if the lock date has passed.");
-            }
-
-            _logger.LogInformation("Contest {ContestId} has at least 10 contestants and lock date has passed. Allowing the contest to be finalized", contest.Id);
+            await PublicToFinalized(contest, cancellationToken);
         }
 
         if (contest.Status is not ContestStatus.Draft)
         {
-            _logger.LogInformation("Detected a modified contest {ContestId} that is not draft, checking for forbidden property modifications", contest.Id);
-
-            PropertyEntry<Contest, string> name = entry.Property(e => e.Name);
-            if (name.IsModified)
-            {
-                throw new Exception("A contest's name cannot be modified once the contest has been published.");
-            }
-
-            PropertyEntry<Contest, DateTime> lockDate = entry.Property(e => e.LockDate);
-            if (lockDate.IsModified)
-            {
-                throw new Exception("A contest's lock date cannot be modified once the contest has been published.");
-            }
-
-            _logger.LogInformation("Contest {ContestId} has no forbidden property modifications. Allowing the contest to be modified", contest.Id);
+            CheckForbiddenPropertyModifications(entry, contest);
         }
+    }
 
-        // Detect forbidden state transitions
+    private static void DetectForbiddenStateTransitions(PropertyEntry<Contest, ContestStatus> status)
+    {
         switch (status)
         {
             case { OriginalValue: ContestStatus.Public, CurrentValue: ContestStatus.Draft }:
@@ -102,6 +72,55 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
             case { OriginalValue: ContestStatus.Finalized, CurrentValue: ContestStatus.Public }:
                 throw new Exception("A contest cannot be reverted to a public status once it has been finalized.");
         }
+    }
+
+    private void DraftToPublic(Contest contest)
+    {
+        _logger.LogInformation("Detected contest {ContestId} is being published. Validating the lock date is at least three days in the future", contest.Id);
+
+        if (contest.LockDate < DateTime.UtcNow.AddDays(3))
+        {
+            throw new Exception("A contest can only be published if the lock date is at least three days in the future.");
+        }
+
+        _logger.LogInformation("Contest {ContestId} has a valid lock date. Allowing the contest to be published", contest.Id);
+    }
+
+    private async ValueTask PublicToFinalized(Contest contest, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Detected contest {ContestId} is being finalized. Validating the contest has at least 10 contestants and lock date has passed", contest.Id);
+
+        int contestantsCount = await _dbCtx.Contestants.CountAsync(c => c.Contest.Id == contest.Id, cancellationToken);
+        if (contestantsCount < 10)
+        {
+            throw new Exception("A contest can only be finalized if it has at least 10 contestants.");
+        }
+
+        if (contest.LockDate > DateTime.UtcNow)
+        {
+            throw new Exception("A contest can only be finalized if the lock date has passed.");
+        }
+
+        _logger.LogInformation("Contest {ContestId} has at least 10 contestants and lock date has passed. Allowing the contest to be finalized", contest.Id);
+    }
+
+    private void CheckForbiddenPropertyModifications(EntityEntry<Contest> entry, Contest contest)
+    {
+        _logger.LogInformation("Detected a modified contest {ContestId} that is not draft, checking for forbidden property modifications", contest.Id);
+
+        PropertyEntry<Contest, string> name = entry.Property(e => e.Name);
+        if (name.IsModified)
+        {
+            throw new Exception("A contest's name cannot be modified once the contest has been published.");
+        }
+
+        PropertyEntry<Contest, DateTime> lockDate = entry.Property(e => e.LockDate);
+        if (lockDate.IsModified)
+        {
+            throw new Exception("A contest's lock date cannot be modified once the contest has been published.");
+        }
+
+        _logger.LogInformation("Contest {ContestId} has no forbidden property modifications. Allowing the contest to be modified", contest.Id);
     }
 
     protected override async ValueTask Deleted(EntityEntry<Contest> entry, CancellationToken cancellationToken)
