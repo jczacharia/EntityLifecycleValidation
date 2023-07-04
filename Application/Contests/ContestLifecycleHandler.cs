@@ -88,7 +88,12 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
 
     private async ValueTask PublicToFinalized(Contest contest, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Detected contest {ContestId} is being finalized. Validating the contest has at least 10 contestants and lock date has passed", contest.Id);
+        _logger.LogInformation("Detected contest {ContestId} is being finalized. Validating the contest lock date has passed and has at least 10 contestants", contest.Id);
+
+        if (contest.LockDate > DateTime.UtcNow)
+        {
+            throw new Exception("A contest can only be finalized if the lock date has passed.");
+        }
 
         int contestantsCount = await _dbCtx.Contestants.CountAsync(c => c.Contest.Id == contest.Id, cancellationToken);
         if (contestantsCount < 10)
@@ -96,12 +101,7 @@ public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
             throw new Exception("A contest can only be finalized if it has at least 10 contestants.");
         }
 
-        if (contest.LockDate > DateTime.UtcNow)
-        {
-            throw new Exception("A contest can only be finalized if the lock date has passed.");
-        }
-
-        _logger.LogInformation("Contest {ContestId} has at least 10 contestants and lock date has passed. Allowing the contest to be finalized", contest.Id);
+        _logger.LogInformation("Contest {ContestId} lock date has passed and has at least 10 contestants. Allowing the contest to be finalized", contest.Id);
     }
 
     private void CheckForbiddenPropertyModifications(EntityEntry<Contest> entry)

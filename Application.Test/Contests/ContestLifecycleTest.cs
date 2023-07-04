@@ -138,7 +138,9 @@ public class ContestLifecycleTest
     {
         Contest contest = new Contest
         {
-            Name = "New Contest", Status = ContestStatus.Public,
+            Name = "New Contest",
+            Status = ContestStatus.Public,
+            LockDate = DateTime.UtcNow.AddDays(-1),
         };
         await _tb.DbCtx.Contests.AddAsync(contest);
 
