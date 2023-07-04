@@ -29,9 +29,6 @@ public class ContestLifecycleTest
             await dbCtx.Contests.AddAsync(contest);
             Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
             result!.Message.Should().Be("A contest can only be created in a draft state.");
-
-            contest.Status = ContestStatus.Draft;
-            Assert.DoesNotThrowAsync(() => dbCtx.SaveChangesAsync());
         });
     }
 

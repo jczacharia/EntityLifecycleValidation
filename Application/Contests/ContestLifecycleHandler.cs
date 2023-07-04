@@ -17,7 +17,6 @@ public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
         _dbCtx = dbCtx;
     }
 
-
     protected override ValueTask Added(EntityEntry<Contest> entry, CancellationToken cancellationToken)
     {
         Contest contest = entry.Entity;
