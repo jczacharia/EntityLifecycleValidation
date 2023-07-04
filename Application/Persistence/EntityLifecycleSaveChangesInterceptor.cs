@@ -42,7 +42,17 @@ public class EntityLifecycleSaveChangesInterceptor : SaveChangesInterceptor
         IsSaving = true;
 
         List<EntityEntry> entityEntries = eventData.Context!.ChangeTracker.Entries().ToList();
-        await _publisher.Publish(new SavingChangesEvent(entityEntries), cancellationToken);
+
+        try
+        {
+            await _publisher.Publish(new SavingChangesEvent(entityEntries), cancellationToken);
+        }
+        catch
+        {
+            IsFinalizing = false;
+            IsSaving = false;
+            throw;
+        }
 
         return result;
     }
@@ -65,10 +75,16 @@ public class EntityLifecycleSaveChangesInterceptor : SaveChangesInterceptor
         IsFinalizing = true;
 
         List<EntityEntry> entityEntries = eventData.Context!.ChangeTracker.Entries().ToList();
-        await _publisher.Publish(new SavedChangesEvent(entityEntries), cancellationToken);
 
-        IsFinalizing = false;
-        IsSaving = false;
+        try
+        {
+            await _publisher.Publish(new SavedChangesEvent(entityEntries), cancellationToken);
+        }
+        finally
+        {
+            IsFinalizing = false;
+            IsSaving = false;
+        }
 
         return result;
     }

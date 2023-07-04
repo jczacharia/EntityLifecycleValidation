@@ -53,7 +53,7 @@ public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
 
         if (status is { OriginalValue: ContestStatus.Public, CurrentValue: ContestStatus.Finalized })
         {
-            _logger.LogInformation("Detected contest {ContestId} is being finalized. Validating the contest has at least 10 contestants", contest.Id);
+            _logger.LogInformation("Detected contest {ContestId} is being finalized. Validating the contest has at least 10 contestants and lock date has passed", contest.Id);
 
             int contestantsCount = await _dbCtx.Contestants.CountAsync(c => c.Contest.Id == contest.Id, cancellationToken);
             if (contestantsCount < 10)
@@ -61,7 +61,12 @@ public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
                 throw new Exception("A contest can only be finalized if it has at least 10 contestants.");
             }
 
-            _logger.LogInformation("Contest {ContestId} has at least 10 contestants. Allowing the contest to be finalized", contest.Id);
+            if (contest.LockDate > DateTime.UtcNow)
+            {
+                throw new Exception("A contest can only be finalized if the lock date has passed.");
+            }
+
+            _logger.LogInformation("Contest {ContestId} has at least 10 contestants and lock date has passed. Allowing the contest to be finalized", contest.Id);
         }
 
         if (contest.Status is not ContestStatus.Draft)

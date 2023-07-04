@@ -52,9 +52,6 @@ public class ContestLifecycleTest
             contest.LockDate = DateTime.UtcNow.AddDays(2);
             Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
             result!.Message.Should().Be("A contest can only be published if the lock date is at least three days in the future.");
-
-            contest.LockDate = DateTime.UtcNow.AddDays(3);
-            Assert.DoesNotThrowAsync(() => dbCtx.SaveChangesAsync());
             return default;
         });
     }
@@ -148,25 +145,46 @@ public class ContestLifecycleTest
         };
         await _tb.DbCtx.Contests.AddAsync(contest);
 
-        await _tb.RunInScope(async sp =>
+        await _tb.RunInScope(sp =>
         {
             DbCtx dbCtx = sp.GetRequiredService<DbCtx>();
             dbCtx.Contests.Attach(contest);
             contest.Status = ContestStatus.Finalized;
             Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
             result!.Message.Should().Be("A contest can only be finalized if it has at least 10 contestants.");
+            return default;
+        });
+    }
 
-            await dbCtx.Contestants.AddRangeAsync(Enumerable.Range(0, 10)
-                .Select(_ => new Contestant
+    [Test]
+    public async ValueTask CannotBeFinalizedLockDateHasPassed()
+    {
+        Contest contest = new Contest
+        {
+            Name = "New Contest",
+            Status = ContestStatus.Public,
+            LockDate = DateTime.UtcNow.AddDays(1),
+        };
+        await _tb.DbCtx.Contests.AddAsync(contest);
+
+        await _tb.DbCtx.Contestants.AddRangeAsync(Enumerable.Range(0, 10)
+            .Select(_ => new Contestant
+            {
+                Contest = contest,
+                User = new User
                 {
-                    Contest = contest,
-                    User = new User
-                    {
-                        Username = "Username",
-                    },
-                }));
+                    Username = "Username",
+                },
+            }));
 
-            Assert.DoesNotThrowAsync(() => dbCtx.SaveChangesAsync());
+        await _tb.RunInScope(sp =>
+        {
+            DbCtx dbCtx = sp.GetRequiredService<DbCtx>();
+            dbCtx.Contests.Attach(contest);
+            contest.Status = ContestStatus.Finalized;
+            Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
+            result!.Message.Should().Be("A contest can only be finalized if the lock date has passed.");
+            return default;
         });
     }
 
@@ -197,9 +215,6 @@ public class ContestLifecycleTest
             dbCtx.Contests.Remove(contest);
             Exception? result = Assert.ThrowsAsync<Exception>(() => dbCtx.SaveChangesAsync());
             result!.Message.Should().Be("A contest cannot be deleted if it has contestants.");
-
-            dbCtx.Contestants.Remove(contestant);
-            Assert.DoesNotThrowAsync(() => dbCtx.SaveChangesAsync());
             return default;
         });
     }

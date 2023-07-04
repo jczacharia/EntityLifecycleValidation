@@ -59,6 +59,7 @@ public class ContestCommandsTest
         Contest createRes = await _tb.Command(new CreateContestCommand("Name"));
         await _tb.Command(new UpdateContestCommand(createRes.Id, "Name", DateTime.UtcNow.AddDays(10)));
         await _tb.Command(new PublishContestCommand(createRes.Id));
+
         Contest? contest = await _tb.DbCtx.Contests.FindAsync(createRes.Id);
         await _tb.DbCtx.Contestants.AddRangeAsync(Enumerable.Range(0, 10)
             .Select(_ => new Contestant
@@ -70,6 +71,7 @@ public class ContestCommandsTest
                 },
             }));
 
+        contest!.LockDate = DateTime.UtcNow.AddDays(-1);
         Contest finalize = await _tb.Command(new FinalizeContestCommand(createRes.Id));
         finalize.Status.Should().Be(ContestStatus.Finalized);
         contest!.Status.Should().Be(ContestStatus.Finalized);
