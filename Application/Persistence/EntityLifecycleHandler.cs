@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Application.Persistence;
 
-public abstract class EntityLifeCycleHandler<TEntity> : INotificationHandler<SavingChangesEvent> where TEntity : class
+public abstract class EntityLifecycleHandler<TEntity> : INotificationHandler<SavingChangesEvent> where TEntity : class
 {
     public async ValueTask Handle(SavingChangesEvent notification, CancellationToken cancellationToken)
     {

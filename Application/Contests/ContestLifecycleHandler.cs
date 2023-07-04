@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Contests;
 
-public class ContestLifecycleHandler : EntityLifeCycleHandler<Contest>
+public class ContestLifecycleHandler : EntityLifecycleHandler<Contest>
 {
     private readonly DbCtx _dbCtx;
     private readonly ILogger<ContestLifecycleHandler> _logger;
